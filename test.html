@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Practice Problem Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@huggingface/inference@2.6.4/+esm"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            color: #FFFFFF;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #1E1E1E;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 2.8em;
+            color: #2DAC61;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: #2DAC61;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        h3 {
+            font-size: 1.5em;
+            color: #2DAC61;
+            margin-top: 15px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+
+        button {
+            background-color: #2DAC61;
+            color: #FFFFFF;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.2s;
+            display: block;
+            margin: 20px auto;
+        }
+
+        button:hover {
+            background-color: #238C4F;
+            transform: scale(1.05);
+        }
+
+        button:disabled {
+            background-color: #666666;
+            cursor: not-allowed;
+        }
+
+        #result,
+        #solutionResult {
+            margin-top: 30px;
+            background-color: #2A2A2A;
+            border: 1px solid #2DAC61;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .loading {
+            color: #2DAC61;
+            font-style: italic;
+            text-align: center;
+        }
+
+        .result-content {
+            color: #FFFFFF;
+            line-height: 1.8;
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #2DAC61;
+            border-radius: 4px;
+            background-color: #333333;
+            color: #FFFFFF;
+            font-size: 16px;
+            margin: 20px 0;
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .solution-btn {
+            background-color: #1E90FF;
+            margin-top: 20px;
+        }
+
+        .solution-btn:hover {
+            background-color: #1873CC;
+        }
+
+        #solutionResult {
+            border-color: #1E90FF;
+        }
+
+        .step {
+            margin-bottom: 15px;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Enhanced Practice Problem Generator</h1>
+        <h2>Get inspired with comprehensive practice problems!</h2>
+        <p>Select a field and level to generate a relevant practice problem. Each problem includes a title, description,
+            suggested tools, and helpful tips.</p>
+
+        <select id="fieldDropdown">
+            <option value="webdev">Web Development</option>
+            <option value="graphicdesign">Graphic Design</option>
+            <option value="contentwriting">Content Writing</option>
+            <option value="digitalmarketing">Digital Marketing</option>
+            <option value="datascience">Data Science & Analytics</option>
+            <option value="videoediting">Video Editing</option>
+            <option value="socialmedia">Social Media Management</option>
+            <option value="mobileappdev">Mobile App Development</option>
+            <option value="aiml">AI/ML/GenAI</option>
+            <option value="uiux">UI/UX Design</option>
+        </select>
+
+        <select id="levelDropdown">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="expert">Expert</option>
+        </select>
+
+        <button id="generateBtn">Generate Practice Problem</button>
+        <div id="result"></div>
+        <button id="solutionBtn" class="solution-btn" style="display: none;">Generate Step-by-Step Solution</button>
+        <div id="solutionResult"></div>
+    </div>
+
+    <script type="module">
+        import { HfInference } from 'https://cdn.jsdelivr.net/npm/@huggingface/inference@2.6.4/+esm';
+
+        const API_TOKEN = "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";
+        const inference = new HfInference(API_TOKEN);
+
+        const fields = {
+            webdev: "web development",
+            graphicdesign: "graphic design",
+            contentwriting: "content writing",
+            digitalmarketing: "digital marketing",
+            datascience: "data science and analytics",
+            videoediting: "video editing",
+            socialmedia: "social media management",
+            mobileappdev: "mobile app development",
+            aiml: "AI/ML/GenAI",
+            uiux: "UI/UX design"
+        };
+
+        const fieldSpecificPrompts = {
+            webdev: {
+                beginner: "Create a simple static website with HTML and CSS. Focus on basic layout, styling, and responsiveness.",
+                intermediate: "Develop a dynamic website using JavaScript and a backend technology. Include features like form handling and data storage.",
+                expert: "Build a complex web application with advanced features such as real-time updates, authentication, and integration with external APIs."
+            },
+            graphicdesign: {
+                beginner: "Design a simple logo or icon for a fictional company. Focus on basic shapes, colors, and typography.",
+                intermediate: "Create a multi-page brochure or magazine spread. Consider layout, image placement, and consistent styling.",
+                expert: "Develop a comprehensive brand identity system, including logo variations, color palette, typography, and application examples."
+            },
+            contentwriting: {
+                beginner: "Write a short blog post on a simple topic. Focus on clear structure and basic SEO principles.",
+                intermediate: "Create a series of social media posts for a product launch. Consider audience engagement and platform-specific best practices.",
+                expert: "Develop a comprehensive content strategy for a company's website, including SEO-optimized landing pages, blog posts, and downloadable resources."
+            },
+            digitalmarketing: {
+                beginner: "Create a basic social media marketing plan for a small local business. Focus on choosing platforms and content types.",
+                intermediate: "Develop a multi-channel digital marketing campaign for a product launch. Include social media, email marketing, and paid advertising.",
+                expert: "Design a comprehensive digital marketing strategy for a large e-commerce site, including SEO, content marketing, email automation, and advanced analytics."
+            },
+            datascience: {
+                beginner: "Perform basic data analysis on a small dataset using Python or R. Focus on data cleaning and simple visualizations.",
+                intermediate: "Build a predictive model for a business problem using machine learning techniques. Include feature engineering and model evaluation.",
+                expert: "Develop an advanced data science project involving big data technologies, deep learning, and deployment of models in a production environment."
+            },
+            videoediting: {
+                beginner: "Edit a short video clip, focusing on basic cuts, transitions, and adding simple text overlays.",
+                intermediate: "Create a promotional video for a product, incorporating multiple video sources, audio editing, and basic motion graphics.",
+                expert: "Produce a complex video project with advanced visual effects, color grading, and seamless integration of 3D elements."
+            },
+            socialmedia: {
+                beginner: "Create a content calendar for a small business's social media accounts. Focus on consistency and basic engagement strategies.",
+                intermediate: "Develop a social media campaign for a product launch across multiple platforms. Include content creation, scheduling, and engagement tactics.",
+                expert: "Design a comprehensive social media strategy for a large brand, including influencer partnerships, paid advertising, and advanced analytics tracking."
+            },
+            mobileappdev: {
+                beginner: "Develop a simple mobile app with a few screens and basic functionality using a framework like React Native or Flutter.",
+                intermediate: "Create a feature-rich mobile app with local data storage, API integration, and a polished UI.",
+                expert: "Build a complex mobile application with advanced features such as real-time updates, offline functionality, and integration with device hardware."
+            },
+            aiml: {
+                beginner: "Implement a basic machine learning model for a simple classification task using scikit-learn or TensorFlow.",
+                intermediate: "Develop a natural language processing project, such as a sentiment analysis tool or a chatbot using pre-trained models.",
+                expert: "Create an advanced AI system involving multiple machine learning models, deep learning, and deployment in a scalable cloud environment."
+            },
+            uiux: {
+                beginner: "Design a simple mobile app interface for a specific function, focusing on basic layout and usability principles.",
+                intermediate: "Create a comprehensive UI kit for a web application, including various components and responsive designs.",
+                expert: "Develop a complex design system for a large-scale product, including detailed interaction design, accessibility considerations, and extensive user testing methodologies."
+            }
+        };
+
+        function formatText(text) {
+            text = text.trim().replace(/\n\s*\n/g, '\n');
+
+            let lines = text.split('\n').filter(line => line.trim() !== '');
+            let title = "No Title Provided";
+            let description = "No Description Provided";
+            let tools = "No Tools Listed";
+            let tips = "No Tips Provided";
+
+            let currentSection = "";
+
+            lines.forEach(line => {
+                if (line.toLowerCase().startsWith('title:')) {
+                    title = line.replace(/title:/i, '').trim();
+                } else if (line.toLowerCase().startsWith('description:')) {
+                    currentSection = "description";
+                    description = line.replace(/description:/i, '').trim();
+                } else if (line.toLowerCase().startsWith('tools:')) {
+                    currentSection = "tools";
+                    tools = line.replace(/tools:/i, '').trim();
+                } else if (line.toLowerCase().startsWith('tips:')) {
+                    currentSection = "tips";
+                    tips = line.replace(/tips:/i, '').trim();
+                } else {
+                    switch (currentSection) {
+                        case "description":
+                            description += " " + line.trim();
+                            break;
+                        case "tools":
+                            tools += " " + line.trim();
+                            break;
+                        case "tips":
+                            tips += " " + line.trim();
+                            break;
+                    }
+                }
+            });
+
+            return `
+                <div class="result-content">
+                    <h2>${title}</h2>
+                    <h3>Description:</h3>
+                    <p>${description}</p>
+                    <h3>Tools to Use:</h3>
+                    <p>${tools}</p>
+                    <h3>Tips:</h3>
+                    <p>${tips}</p>
+                </div>
+            `;
+        }
+
+        function formatSolution(text) {
+            text = text.trim().replace(/\n\s*\n/g, '\n');
+            let lines = text.split('\n').filter(line => line.trim() !== '');
+            let steps = [];
+
+            lines.forEach(line => {
+                if (line.match(/^Step \d+:/i)) {
+                    steps.push(line);
+                } else if (steps.length > 0) {
+                    steps[steps.length - 1] += ' ' + line.trim();
+                }
+            });
+
+            return `
+        <div class="result-content">
+            <h2>Step-by-Step Solution</h2>
+            ${steps.map(step => {
+                let match = step.match(/^Step (\d+): (.*)$/i);
+                let description = match[2].split('. ').map(item => `<li>${item}</li>`).join('');
+                return `
+                    <h2>Step ${match[1]}</h2>
+                    <ul>${description}</ul>
+                `;
+            }).join('')}
+        </div>
+    `;
+        }
+
+        async function generateProblem() {
+            const generateBtn = document.getElementById('generateBtn');
+            const result = document.getElementById('result');
+            const solutionBtn = document.getElementById('solutionBtn');
+            const fieldDropdown = document.getElementById('fieldDropdown');
+            const levelDropdown = document.getElementById('levelDropdown');
+            const field = fieldDropdown.value;
+            const level = levelDropdown.value;
+
+            generateBtn.disabled = true;
+            solutionBtn.style.display = 'none';
+            result.innerHTML = "<p class='loading'>Generating problem...</p>";
+
+            try {
+                const fieldPrompt = fields[field];
+                const specificPrompt = fieldSpecificPrompts[field][level];
+
+                const prompt = `Generate a comprehensive practice problem for ${fieldPrompt} at the ${level} level. 
+                The problem should focus on: ${specificPrompt}
+                Include the following sections:
+                1. A brief, catchy title
+                2. A detailed description of the problem and its requirements (at least 20 words)
+                3. A list of 3-5 specific tools or technologies to use,
+                4. 3-5 helpful tips or best practices for approaching this problem (under 5 words each)
+                5. Put each item on a new line
+                
+                Format the response as:
+                'Title: Your title here
+                Description: Your detailed description here (20+ words)
+                Tools: 
+                Tool 1,
+                Tool 2, 
+                Tool 3,
+                Tips: 
+                Tip 1, 
+                Tip 2, 
+                Tip 3,
+                
+                Ensure each section is comprehensive and informative.`;
+
+                const response = await inference.textGeneration({
+                    model: "mistralai/Mistral-Nemo-Instruct-2407",
+                    inputs: prompt,
+                    parameters: {
+                        max_new_tokens: 800,
+                        return_full_text: false
+                    }
+                });
+
+                const formattedText = formatText(response.generated_text);
+
+                result.innerHTML = formattedText;
+                solutionBtn.style.display = 'block';
+            } catch (error) {
+                console.error("Error generating problem:", error);
+                result.innerHTML = "<p class='loading'>An error occurred while generating the problem. Please try again.</p>";
+            } finally {
+                generateBtn.disabled = false;
+            }
+        }
+
+        async function generateSolution() {
+            const solutionBtn = document.getElementById('solutionBtn');
+            const solutionResult = document.getElementById('solutionResult');
+            const problemDescription = document.querySelector('#result .result-content');
+
+            solutionBtn.disabled = true;
+            solutionResult.innerHTML = "<p class='loading'>Generating solution...</p>";
+
+            try {
+                const prompt = `Based on the following practice problem, provide a detailed step-by-step solution:
+
+                ${problemDescription.innerText}
+
+                Please provide a comprehensive solution with at least 5 steps. Each step should be detailed and explain the reasoning behind it. Format the response as:
+                'Step 1: [First step description]
+                Step 2: [Second step description]
+                ...
+                Step N: [Final step description]'
+
+                Ensure each step is informative and helps the learner understand how to approach and solve the problem. Do not include any code snippets in your response.`;
+
+                const response = await inference.textGeneration({
+                    model: "mistralai/Mistral-Nemo-Instruct-2407",
+                    inputs: prompt,
+                    parameters: {
+                        max_new_tokens: 1000,
+                        return_full_text: false
+                    }
+                });
+
+                const formattedSolution = formatSolution(response.generated_text);
+                solutionResult.innerHTML = formattedSolution;
+            } catch (error) {
+                console.error("Error generating solution:", error);
+                solutionResult.innerHTML = "<p class='loading'>An error occurred while generating the solution. Please try again.</p>";
+            } finally {
+                solutionBtn.disabled = false;
+            }
+        }
+
+        document.getElementById('generateBtn').addEventListener('click', generateProblem);
+        document.getElementById('solutionBtn').addEventListener('click', generateSolution);
+    </script>
+</body>
+
+</html>
